@@ -7,12 +7,12 @@ struct SeedResourceServer: AsyncMigration {
         
         let uuid = UUID()
         //let password = try Bcrypt.hash("resource-1-password")
-        let password = "resource-1-password"
+        let password = "pass@d"
         
         let server = try ResourceServer(
             id: uuid,
-            username: "resource-1",
-            password: password, encryptionKey: "hello"
+            username: "dewonderstruck",
+            password: password, encryptionKey: "i+/61SLnMj2A25nB6sVJnLtHkJQQNMDubwoCbx83bsk="
         )
         
         return try await server.save(on: database)
@@ -21,7 +21,7 @@ struct SeedResourceServer: AsyncMigration {
     func revert(on database: Database) async throws {
         
         try await ResourceServer.query(on: database)
-            .filter(\.$username == "resource-1")
+            .filter(\.$username == "dewonderstruck")
             .delete()
     }
     

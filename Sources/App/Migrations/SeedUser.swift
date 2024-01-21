@@ -1,33 +1,33 @@
 import Fluent
 import Vapor
 
-struct SeedUserJaneDoe: AsyncMigration {
+struct SeedUser: AsyncMigration {
    
    func prepare(on database: Database) async throws {
       
       let uuid = UUID(uuidString: "8c3afb78-3b44-11ec-8aa0-9c18a4eebeeb")
-      let password = try Bcrypt.hash("password")
+      let password = try Bcrypt.hash("passmodium@d")
 
       let author = UserModel(
          id: uuid,
-         username: "jane_doe@something.com",
+         username: "vamsi@dewonderstruck.com",
          password: password,
-         emailAddress: nil,
-         emailAddressVerified: nil,
-         givenName: "Jane",
-         familyName: "Doe",
+         emailAddress: "vamsi@dewonderstruck.com",
+         emailAddressVerified: false,
+         givenName: "Vamsi",
+         familyName: "Madduluri",
          middleName: nil,
-         nickname: nil,
+         nickname: "vamsi",
          profile: nil,
          picture: nil,
-         website: nil,
-         gender: nil,
+         website: "https://vamsimadduluri.com",
+         gender: "male",
          birthdate: nil,
          zoneinfo: nil,
          locale: nil,
          phoneNumber: nil,
          phoneNumberVerified: nil,
-         roles: ["viewer","lalala","something","something"],
+         roles: ["superadmin.oauth.dewonderstruck.com", "openid.oauth.dewonderstruck.com"],
          newsletter: false,
          blocked: false,
          lastLogin: nil,
