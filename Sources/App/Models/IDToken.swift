@@ -19,7 +19,7 @@ final class IDToken: Model, VaporOAuth.IDToken {
         return
     }
     
-    static let schema = "id_token"
+    static let schema = "id_tokens"
     
     @ID(key: .id)
     var id: UUID?

@@ -15,7 +15,7 @@ import VaporOAuth
 /// Represents a refresh token used for authentication.
 final class RefreshToken: VaporOAuth.RefreshToken, Model, Content {
     
-    static let schema = "refresh_token"
+    static let schema = "refresh_tokens"
     
     @ID(key: .id)
     var id: UUID?

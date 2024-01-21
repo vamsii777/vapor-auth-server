@@ -19,7 +19,7 @@ import Vapor
 final class AuthorizationCode: Model, Content {
     
     /// The database schema for the `MyAuthorizationCode` model.
-    static let schema = "authorization_code"
+    static let schema = "authorizations"
     
     /// The unique identifier for the authorization code.
     @ID(key: .id)

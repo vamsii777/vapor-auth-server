@@ -43,7 +43,7 @@ import Fluent
 ///
 final class UserModel: Model, Content {
     
-    static let schema = "user"
+    static let schema = "users"
     
     // Primary key must be named id (Fluent requirement)
     @ID(key: .id) var id: UUID?

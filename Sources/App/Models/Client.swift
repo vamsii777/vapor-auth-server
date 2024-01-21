@@ -18,7 +18,7 @@ extension OAuthFlowType: Content {}
 /// Represents a client in the authentication system.
 final class Client: Model, Content {
     
-    static let schema = "client"
+    static let schema = "clients"
     
     @ID(key: .id)
     var id: UUID?

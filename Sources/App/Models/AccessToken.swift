@@ -24,7 +24,7 @@ import JWTKit
 final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
     
     /// The database collection name for the access token.
-    static let schema: String = "access_token"
+    static let schema: String = "access_tokens"
     
     /// The unique identifier of the access token.
     @ID(key: .id)
