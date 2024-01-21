@@ -5,7 +5,7 @@ import VaporOAuth
 final class CryptoKey: Model, Content {
     
     static let schema = "crypto_keys"
-    static let database: DatabaseID = .keyManagement
+    static let database: DatabaseID = .main
     
     @ID(key: .id) var id: UUID?
     @Field(key: "key_type") var keyType: KeyType // "public", "private", etc.

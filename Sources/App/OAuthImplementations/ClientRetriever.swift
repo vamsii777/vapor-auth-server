@@ -52,7 +52,7 @@ final class ClientRetriever: VaporOAuth.ClientRetriever {
         print("\n-----------------------------")
         print("MyClientRetriever() \(#function)")
         print("-----------------------------")
-        print("OAuthClient redirect: \(oauthClient.redirectURIs)")
+        print("OAuthClient redirect: \(String(describing: oauthClient.redirectURIs))")
         print("-----------------------------")
 #endif
         

@@ -45,18 +45,26 @@ final class MyKeyManagementService: VaporOAuth.KeyManagementService {
             throw Abort(.notFound)
         }
         
-        // Ensure that the key type is "private" because P-256 keys don't have a public/private distinction like RSA
-        guard keyType == .private else {
-            throw Abort(.badRequest, reason: "Invalid key type for P-256 key")
+        switch keyType {
+        case .private:
+            // Parse the PEM representation of the private key
+            let privateKeyPem = keyRecord.keyValue
+            guard let privateKey = try? P256.Signing.PrivateKey(pemRepresentation: privateKeyPem) else {
+                throw Abort(.internalServerError, reason: "Failed to parse P-256 private key")
+            }
+            return privateKey.rawRepresentation
+            
+        case .public:
+            // Parse the PEM representation of the public key
+            let publicKeyPem = keyRecord.keyValue
+            guard let publicKey = try? P256.Signing.PublicKey(pemRepresentation: publicKeyPem) else {
+                throw Abort(.internalServerError, reason: "Failed to parse P-256 public key")
+            }
+            return publicKey.rawRepresentation
+            
+        default:
+            throw Abort(.badRequest, reason: "Unsupported key type")
         }
-        
-        // Parse the PEM representation of the private key
-        let privateKeyPem = keyRecord.keyValue
-        guard let privateKey = try? P256.Signing.PrivateKey(pemRepresentation: privateKeyPem) else {
-            throw Abort(.internalServerError, reason: "Failed to parse P-256 private key")
-        }
-        
-        return privateKey.rawRepresentation
     }
     
     func listKeys() async throws -> [String] {
@@ -102,11 +110,11 @@ final class MyKeyManagementService: VaporOAuth.KeyManagementService {
     
     func privateKeyIdentifier() async throws -> String {
         let keyRecord = try await cryptoKeysRepository.findActiveKey(keyType: .private)
-//        for key in keyRecord {
-//            if key.isActive {
-//                return key.keyValue
-//            }
-//        }
+        //        for key in keyRecord {
+        //            if key.isActive {
+        //                return key.keyValue
+        //            }
+        //        }
         return keyRecord.id!.uuidString
     }
     

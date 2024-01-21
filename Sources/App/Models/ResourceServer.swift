@@ -44,14 +44,21 @@ final class ResourceServer: Model, Content {
         try ResourceServer.decrypt(password: self.encryptedPassword, withKey: decryptionKey)
     }
     
-    private static func encrypt(password: String, withKey key: String) throws -> String {
-        let keyBytes = SymmetricKey(data: key.data(using: .utf8)!)
+    private static func symmetricKey(from base64Key: String) throws -> SymmetricKey {
+        guard let keyData = Data(base64Encoded: base64Key) else {
+            throw Abort(.internalServerError, reason: "Invalid encryption key format")
+        }
+        return SymmetricKey(data: keyData)
+    }
+
+    private static func encrypt(password: String, withKey base64Key: String) throws -> String {
+        let keyBytes = try symmetricKey(from: base64Key)
         let sealedBox = try AES.GCM.seal(password.data(using: .utf8)!, using: keyBytes)
         return sealedBox.combined!.base64EncodedString()
     }
-    
-    private static func decrypt(password: String, withKey key: String) throws -> String {
-        let keyBytes = SymmetricKey(data: key.data(using: .utf8)!)
+
+    private static func decrypt(password: String, withKey base64Key: String) throws -> String {
+        let keyBytes = try symmetricKey(from: base64Key)
         guard let data = Data(base64Encoded: password),
               let sealedBox = try? AES.GCM.SealedBox(combined: data) else {
             throw Abort(.internalServerError, reason: "Failed to decode encrypted password")
@@ -59,4 +66,5 @@ final class ResourceServer: Model, Content {
         let decryptedData = try AES.GCM.open(sealedBox, using: keyBytes)
         return String(data: decryptedData, encoding: .utf8)!
     }
+
 }
