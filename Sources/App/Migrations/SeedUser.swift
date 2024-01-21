@@ -44,7 +44,7 @@ struct SeedUser: AsyncMigration {
       
       try await UserModel
          .query(on: database)
-         .filter(\.$username == "jane_doe@something.com")
+         .filter(\.$username == "vamsi@dewonderstruck.com")
          .delete()
    }
    
