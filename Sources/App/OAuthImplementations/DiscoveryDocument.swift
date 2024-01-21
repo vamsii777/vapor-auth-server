@@ -8,79 +8,79 @@ final class DiscoveryDocument: VaporOAuth.DiscoveryDocument {
 
     // Computed properties with hardcoded values
     var issuer: String? {
-        return "OpenID Provider"
+        return Environment.get("ISSUER")
     }
 
     var authorizationEndpoint: String? {
-        return "http://localhost:8090/oauth/authorize"
+        return Environment.get("AUTHORIZATION_ENDPOINT")
     }
 
     var tokenEndpoint: String? {
-        return "http://localhost:8090/oauth/token"
+        return Environment.get("TOKEN_ENDPOINT")
     }
 
     var userInfoEndpoint: String? {
-        return "http://localhost:8090/oauth/userinfo"
+        return Environment.get("USERINFO_ENDPOINT")
     }
 
     var revocationEndpoint: String? {
-        return ""
+        return Environment.get("REVOCATION_ENDPOINT")
     }
 
     var introspectionEndpoint: String? {
-        return "http://localhost:8090/oauth/token_info"
+        return Environment.get("INTROSPECTION_ENDPOINT")
     }
 
     var jwksURI: String? {
-        return "http://localhost:8090/oauth/.well-known/jwks.json"
+        return Environment.get("JWKS_URI")
     }
 
     var registrationEndpoint: String? {
-        return ""
+        return Environment.get("REGISTRATION_ENDPOINT")
     }
 
     var scopesSupported: [String]? {
-        return ["code"]
+        return Environment.get("SCOPES_SUPPORTED")?.split(separator: ",").map { String($0) }
     }
 
     var responseTypesSupported: [String]? {
-        return ["query"]
+        return Environment.get("RESPONSE_TYPES_SUPPORTED")?.split(separator: ",").map { String($0) }
     }
 
     var grantTypesSupported: [String]? {
-        return ["authorization_code"]
+        return Environment.get("GRANT_TYPES_SUPPORTED")?.split(separator: ",").map { String($0) }
     }
 
     var tokenEndpointAuthMethodsSupported: [String]? {
-        return ["client_secret_basic"]
+        return Environment.get("TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED")?.split(separator: ",").map { String($0) }
     }
 
     var tokenEndpointAuthSigningAlgValuesSupported: [String]? {
-        return ["RS256"]
+        return Environment.get("TOKEN_ENDPOINT_AUTH_SIGNING_ALG_VALUES_SUPPORTED")?.split(separator: ",").map { String($0) }
     }
 
     var serviceDocumentation: String? {
-        return ""
+        return Environment.get("SERVICE_DOCUMENTATION")
     }
 
     var uiLocalesSupported: [String]? {
-        return ["en-US"]
+        return Environment.get("UI_LOCALES_SUPPORTED")?.split(separator: ",").map { String($0) }
     }
 
     var opPolicyURI: String? {
-        return ""
+        return Environment.get("OP_POLICY_URI")
     }
 
     var opTosURI: String? {
-        return ""
+        return Environment.get("OP_TOS_URI")
     }
     
     var claimsSupported: [String]? {
-        return ["openid"]
+        return Environment.get("CLAIMS_SUPPORTED")?.split(separator: ",").map { String($0) }
     }
     
     var subjectTypesSupported: [String]? {
-        return [""]
+        return Environment.get("SUBJECT_TYPES_SUPPORTED")?.split(separator: ",").map { String($0) }
     }
 
 

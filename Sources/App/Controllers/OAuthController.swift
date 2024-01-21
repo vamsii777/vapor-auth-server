@@ -8,13 +8,13 @@ import VaporOAuth
 /// A collection of routes related to OAuth authentication.
 public struct OAuthRouteControllerCollection: RouteCollection {
     
-    
+
     /// Boots the OAuthRouteControllerCollection by registering the routes.
     /// - Parameter routes: The RoutesBuilder instance used to register the routes.
     public func boot(routes: RoutesBuilder) throws {
         let passwordProtected = routes.grouped(UserModel.credentialsAuthenticator())
         let oauthRoutes = passwordProtected.grouped("oauth")
-        oauthRoutes.get("login", use: login)
+        oauthRoutes.post("login", use: login)
         oauthRoutes.post("redirect", use: redirect)
         oauthRoutes.get("logout", use: logout)
     }
@@ -42,7 +42,12 @@ public struct OAuthRouteControllerCollection: RouteCollection {
             throw Abort(.internalServerError, reason: "Session cookie not found")
         }
         
-        let redirectURL = "http://localhost:8090/oauth/redirect"
+        // http://localhost:8090/oauth/redirect
+        guard let redirectURI = Environment.get("REDIRECT_URL") else {
+            throw Abort(.internalServerError, reason: "Missing REDIRECT_URL")
+        }
+        
+        let redirectURL = redirectURI
         let response = try await request.redirect(to: redirectURL).encodeResponse(for: request)
         response.cookies["vapor-session"] = cookie
         return response
@@ -97,9 +102,14 @@ public struct OAuthRouteControllerCollection: RouteCollection {
             code_challenge_method: code_challenge_method,
             nonce: nonce
         )
+
+        // http://localhost:8090/oauth/authorize
+        guard let authorizeEndpoint = Environment.get("AUTHORIZATION_ENDPOINT") else {
+            throw Abort(.internalServerError, reason: "Missing AUTHORIZATION_ENDPOINT")
+        }
         
         // Use configurable URL
-        let authorizeURL = "http://localhost:8090/oauth/authorize"
+        let authorizeURL = authorizeEndpoint
         let authorizeURI = URI(string: "\(authorizeURL)?client_id=\(client_id)&redirect_uri=\(redirect_uri)&response_type=code&scope=\(scope)&state=\(state)&nonce=\(nonce)")
         
         guard let cookie = request.cookies["vapor-session"] else {

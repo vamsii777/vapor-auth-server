@@ -18,7 +18,11 @@ struct AuthorizationHandler: AuthorizeHandler {
         request.session.data["nonce"] = authorizationRequestObject.nonce
         
         // Construct the URL to the Nuxt 3 application login page with query parameters
-        let nuxtLoginURLString = "http://your-nuxt-app-domain/login"
+        guard let nuxtLoginURL = Environment.get("LOGIN_URL") else {
+            throw Abort(.internalServerError, reason: "Missing LOGIN_URL")
+        }
+
+        let nuxtLoginURLString = nuxtLoginURL
         var queryParams: [(String, String?)] = [
             ("state", authorizationRequestObject.state),
             ("client_id", authorizationRequestObject.clientID),
