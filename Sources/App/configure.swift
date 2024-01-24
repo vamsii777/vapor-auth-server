@@ -11,6 +11,15 @@ public func configure(_ app: Application) async throws {
     try configureDatabases(app)
     app.databases.default(to: .main)
     
+    let corsConfiguration = CORSMiddleware.Configuration(
+        allowedOrigin: .any(["http://auth.localhost:3000", "http://localhost:8089"]),
+        allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
+        allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, .userAgent, .accessControlAllowOrigin, .accessControlAllowHeaders, .init("X-CSRF-TOKEN")],
+        allowCredentials: true
+    )
+    let cors = CORSMiddleware(configuration: corsConfiguration)
+    app.middleware.use(cors, at: .beginning)
+    
     app.migrations.add(CreateAccessToken(), to: .main)
     app.migrations.add(CreateAuthorizationCode(), to: .main)
     app.migrations.add(CreateRefreshToken(), to: .main)
@@ -35,6 +44,10 @@ public func configure(_ app: Application) async throws {
     
     let sessionsMiddleware = app.sessions.middleware
     app.middleware.use(sessionsMiddleware)
+    
+    app.sessions.use(.fluent(.mongo))
+    
+    app.migrations.add(SessionRecord.migration)
     
     app.lifecycle.use(
         OAuth2(

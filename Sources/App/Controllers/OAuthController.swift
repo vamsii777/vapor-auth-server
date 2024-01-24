@@ -15,7 +15,6 @@ public struct OAuthRouteControllerCollection: RouteCollection {
         let passwordProtected = routes.grouped(UserModel.credentialsAuthenticator())
         let oauthRoutes = passwordProtected.grouped("oauth")
         oauthRoutes.post("login", use: login)
-        oauthRoutes.post("redirect", use: redirect)
         oauthRoutes.get("logout", use: logout)
     }
     
@@ -24,7 +23,7 @@ public struct OAuthRouteControllerCollection: RouteCollection {
     /// - Returns: The Response instance.
     func login(_ request: Request) async throws -> Response {
         let user = try request.auth.require(UserModel.self)
-        
+
         // Log in OAuth user with credentials
         let oauthUser = OAuthUser(
             userID: user.id?.uuidString,
@@ -36,12 +35,6 @@ public struct OAuthRouteControllerCollection: RouteCollection {
         request.auth.login(oauthUser)
         request.session.authenticate(oauthUser)
         
-        // Handle session cookie update
-        guard let cookie = request.cookies["vapor-session"] else {
-            // Handle error: session cookie not found
-            throw Abort(.internalServerError, reason: "Session cookie not found")
-        }
-        
         // http://localhost:8090/oauth/redirect
         guard let redirectURI = Environment.get("REDIRECT_URL") else {
             throw Abort(.internalServerError, reason: "Missing REDIRECT_URL")
@@ -49,7 +42,7 @@ public struct OAuthRouteControllerCollection: RouteCollection {
         
         let redirectURL = redirectURI
         let response = try await request.redirect(to: redirectURL).encodeResponse(for: request)
-        response.cookies["vapor-session"] = cookie
+        
         return response
     }
     
@@ -71,59 +64,6 @@ public struct OAuthRouteControllerCollection: RouteCollection {
         return .ok
     }
     
-    /// Handles the redirect request for OAuth authentication.
-    /// - Parameter request: The incoming Request instance.
-    /// - Returns: The Response instance.
-    func redirect(_ request: Request) async throws -> Response {
-        guard let state = request.session.data["state"],
-              let client_id = request.session.data["client_id"],
-              let scope = request.session.data["scope"],
-              let redirect_uri = request.session.data["redirect_uri"],
-              let csrfToken = request.session.data["CSRFToken"],
-              let code_challenge = request.session.data["code_challenge"],
-              let code_challenge_method = request.session.data["code_challenge_method"],
-              let nonce = request.session.data["nonce"] else {
-            // Handle missing session data
-            throw Abort(.badRequest, reason: "Required session data is missing")
-        }
-        
-        struct Temp: Content {
-            let applicationAuthorized: Bool
-            let csrfToken: String
-            let code_challenge: String
-            let code_challenge_method: String
-            let nonce: String
-        }
-        
-        let content = Temp(
-            applicationAuthorized: true,
-            csrfToken: csrfToken,
-            code_challenge: code_challenge,
-            code_challenge_method: code_challenge_method,
-            nonce: nonce
-        )
-
-        // http://localhost:8090/oauth/authorize
-        guard let authorizeEndpoint = Environment.get("AUTHORIZATION_ENDPOINT") else {
-            throw Abort(.internalServerError, reason: "Missing AUTHORIZATION_ENDPOINT")
-        }
-        
-        // Use configurable URL
-        let authorizeURL = authorizeEndpoint
-        let authorizeURI = URI(string: "\(authorizeURL)?client_id=\(client_id)&redirect_uri=\(redirect_uri)&response_type=code&scope=\(scope)&state=\(state)&nonce=\(nonce)")
-        
-        guard let cookie = request.cookies["vapor-session"] else {
-            // Handle missing session cookie
-            throw Abort(.internalServerError, reason: "Session cookie not found")
-        }
-        
-        let headers = HTTPHeaders(dictionaryLiteral: ("Cookie", "vapor-session=\(cookie.string)"))
-        
-        // Forwarding the session cookie
-        let response = try await request.client.post(authorizeURI, headers: headers, content: content).encodeResponse(for: request)
-        response.cookies["vapor-session"] = cookie
-        
-        return response
-    }
+    
     
 }

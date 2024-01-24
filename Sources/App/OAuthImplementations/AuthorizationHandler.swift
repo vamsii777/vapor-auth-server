@@ -48,6 +48,8 @@ struct AuthorizationHandler: AuthorizeHandler {
         // Combine the base URL and query string
         let redirectURLString = "\(nuxtLoginURLString)?\(queryString)"
         
+        print(redirectURLString)
+        
         // Create a URI from the combined URL string
         let redirectURI = redirectURLString
         
@@ -73,10 +75,11 @@ struct AuthorizationHandler: AuthorizeHandler {
         
         // Log the error using a proper logging mechanism
         // You can use a logging framework here
+
         
         // Construct a user-friendly error message
         // Be cautious about revealing too much information in the error message
-        let errorMessage = "An error occurred during authorization." // Generic message for production
+        let errorMessage = "An error occurred during authorization. \(errorType)" // Generic message for production
         
         // Create and return the response
         return Response(status: statusCode, body: .init(string: errorMessage))
