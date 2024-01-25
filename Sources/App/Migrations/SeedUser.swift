@@ -27,7 +27,7 @@ struct SeedUser: AsyncMigration {
          locale: nil,
          phoneNumber: nil,
          phoneNumberVerified: nil,
-         roles: ["superadmin.oauth.dewonderstruck.com", "openid.oauth.dewonderstruck.com"],
+         roles: ["openid"],
          newsletter: false,
          blocked: false,
          lastLogin: nil,

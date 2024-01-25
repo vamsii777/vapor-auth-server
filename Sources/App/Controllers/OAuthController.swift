@@ -8,13 +8,14 @@ import VaporOAuth
 /// A collection of routes related to OAuth authentication.
 public struct OAuthRouteControllerCollection: RouteCollection {
     
-
+    
     /// Boots the OAuthRouteControllerCollection by registering the routes.
     /// - Parameter routes: The RoutesBuilder instance used to register the routes.
     public func boot(routes: RoutesBuilder) throws {
-        let passwordProtected = routes.grouped(UserModel.credentialsAuthenticator())
+        let passwordProtected = routes.grouped(UserModel.credentialsAuthenticator(database: .main))
         let oauthRoutes = passwordProtected.grouped("oauth")
         oauthRoutes.post("login", use: login)
+        oauthRoutes.get("redirect", use: redirect)
         oauthRoutes.get("logout", use: logout)
     }
     
@@ -22,8 +23,9 @@ public struct OAuthRouteControllerCollection: RouteCollection {
     /// - Parameter request: The incoming Request instance.
     /// - Returns: The Response instance.
     func login(_ request: Request) async throws -> Response {
+        
         let user = try request.auth.require(UserModel.self)
-
+        
         // Log in OAuth user with credentials
         let oauthUser = OAuthUser(
             userID: user.id?.uuidString,
@@ -31,17 +33,80 @@ public struct OAuthRouteControllerCollection: RouteCollection {
             emailAddress: "", // Ensure this is handled appropriately
             password: user.password
         )
-        
+        let loginData = try request.content.decode(LoginRequest.self)
+        let state = loginData.state
         request.auth.login(oauthUser)
         request.session.authenticate(oauthUser)
+        
+        // Handle session cookie update
+        guard request.cookies["vapor-session"] != nil else {
+            // Handle error: session cookie not found
+            throw Abort(.internalServerError, reason: "Session cookie not found")
+        }
         
         // http://localhost:8090/oauth/redirect
         guard let redirectURI = Environment.get("REDIRECT_URL") else {
             throw Abort(.internalServerError, reason: "Missing REDIRECT_URL")
         }
         
-        let redirectURL = redirectURI
+        let redirectURL = "\(redirectURI)?state=\(state)"
         let response = try await request.redirect(to: redirectURL).encodeResponse(for: request)
+        
+        return response
+    }
+    
+    /// Handles the redirect request for OAuth authentication.
+    /// - Parameter request: The incoming Request instance.
+    /// - Returns: The Response instance.
+    func redirect(_ request: Request) async throws -> Response {
+        
+        guard let state = request.session.data["state"],
+              let client_id = request.session.data["client_id"],
+              let scope = request.session.data["scope"],
+              let redirect_uri = request.session.data["redirect_uri"],
+              let csrfToken = request.session.data["CSRFToken"],
+              let code_challenge = request.session.data["code_challenge"],
+              let code_challenge_method = request.session.data["code_challenge_method"],
+              let nonce = request.session.data["nonce"] else {
+            // Handle missing session data
+            throw Abort(.badRequest, reason: "Required session data is missing")
+        }
+        
+        struct Temp: Content {
+            let applicationAuthorized: Bool
+            let csrfToken: String
+            let code_challenge: String
+            let code_challenge_method: String
+            let nonce: String
+        }
+        
+        let content = Temp(
+            applicationAuthorized: true,
+            csrfToken: csrfToken,
+            code_challenge: code_challenge,
+            code_challenge_method: code_challenge_method,
+            nonce: nonce
+        )
+
+        // http://localhost:8090/oauth/authorize
+        guard let authorizeEndpoint = Environment.get("AUTHORIZATION_ENDPOINT") else {
+            throw Abort(.internalServerError, reason: "Missing AUTHORIZATION_ENDPOINT")
+        }
+        
+        // Use configurable URL
+        let authorizeURL = authorizeEndpoint
+        let authorizeURI = URI(string: "\(authorizeURL)?client_id=\(client_id)&redirect_uri=\(redirect_uri)&response_type=code&scope=\(scope)&state=\(state)&nonce=\(nonce)")
+        
+        guard let cookie = request.cookies["vapor-session"] else {
+            // Handle missing session cookie
+            throw Abort(.internalServerError, reason: "Session cookie not found")
+        }
+        
+        let headers = HTTPHeaders(dictionaryLiteral: ("Cookie", "vapor-session=\(cookie.string)"))
+        
+        // Forwarding the session cookie
+        let response = try await request.client.post(authorizeURI, headers: headers, content: content).encodeResponse(for: request)
+        response.cookies["vapor-session"] = cookie
         
         return response
     }
@@ -64,6 +129,13 @@ public struct OAuthRouteControllerCollection: RouteCollection {
         return .ok
     }
     
-    
-    
 }
+
+struct LoginRequest: Content {
+    var username: String
+    var password: String
+    var applicationAuthorized: Bool
+    var csrfToken: String
+    var state: String
+}
+

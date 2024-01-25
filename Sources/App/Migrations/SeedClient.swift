@@ -8,7 +8,7 @@ struct SeedClient: AsyncMigration {
 
        let client = try Client(
          clientId: "Np2bX4LcD1K9jRiV7f8U",
-         redirectUris: ["http://localhost:8089/oauth/callback"],
+         redirectUris: ["http://auth.dewonderstruck.com:8089/oauth/callback"],
          clientSecret: "G5sR8qP3M0bY2vS6wT1xZ4fD7uL9mP0bY2vS6wT1x",
          scopes: ["openid"],
          confidentialClient: true,
