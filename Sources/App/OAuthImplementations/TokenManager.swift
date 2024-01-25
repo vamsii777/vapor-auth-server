@@ -134,6 +134,8 @@ final class TokenManager: VaporOAuth.TokenManager {
     
     func generateTokens(clientID: String, userID: String?, scopes: [String]?, accessTokenExpiryTime: Int, idTokenExpiryTime: Int, nonce: String?) async throws -> (VaporOAuth.AccessToken, VaporOAuth.RefreshToken, VaporOAuth.IDToken) {
         
+        app.logger.info("Starting generateTokens")
+        
         let accessToken = try await generateAccessToken(clientID: clientID, userID: userID, scopes: scopes, expiryTime: accessTokenExpiryTime)
         
         let refreshToken = try await generateRefreshToken(clientID: clientID, userID: userID, scopes: scopes)
@@ -169,7 +171,7 @@ final class TokenManager: VaporOAuth.TokenManager {
             userID: refreshToken.userID,
             scopes: refreshToken.scopes,
             exp: refreshToken.exp,
-            issuer: "OpenID Provider",
+            issuer: "OpenID",
             issuedAt: Date()
         )
         
@@ -278,7 +280,7 @@ final class TokenManager: VaporOAuth.TokenManager {
             userID: accessToken.userID,
             scopes: accessToken.scopes,
             expiryTime: accessToken.expiryTime,
-            issuer: accessToken.issuer,
+            issuer: "OpenID",
             issuedAt: Date()
         )
         
