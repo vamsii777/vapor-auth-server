@@ -11,8 +11,12 @@ public func configure(_ app: Application) async throws {
     try configureDatabases(app)
     app.databases.default(to: .main)
     
+    @Sendable func isSecure(environment: Environment) -> Bool {
+        return environment == .production
+    }
+    
     let corsConfiguration = CORSMiddleware.Configuration(
-        allowedOrigin: .any(["http://auth.localhost:3000", "http://localhost:8089"]),
+        allowedOrigin: .any(["http://auth.dewonderstruck.com:3000", "http://auth.dewonderstruck.com:8089", "http://auth.dewonderstruck.com:8090"]),
         allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
         allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, .userAgent, .accessControlAllowOrigin, .accessControlAllowHeaders, .init("X-CSRF-TOKEN")],
         allowCredentials: true
@@ -42,10 +46,20 @@ public func configure(_ app: Application) async throws {
     
     let keyManagementService = MyKeyManagementService(app: app, cryptoKeysRepository: cryptoKeysRepository)
     
-    let sessionsMiddleware = app.sessions.middleware
-    app.middleware.use(sessionsMiddleware)
+    // Change the cookie name to "foo".
+    app.sessions.configuration.cookieName = "vapor-session"
+
+    // Configures cookie value creation.
+    app.sessions.configuration.cookieFactory = { sessionID in
+            .init(string: sessionID.string, isSecure: isSecure(environment: Environment.development))
+    }
     
-    app.sessions.use(.fluent(.mongo))
+    let sessionsMiddleware = app.sessions.middleware
+    app.middleware.use(sessionsMiddleware, at: .beginning)
+    app.middleware.use(OAuthUserSessionAuthenticator())
+    app.middleware.use(UserModel.sessionAuthenticator())
+    
+    app.sessions.use(.fluent)
     
     app.migrations.add(SessionRecord.migration)
     
