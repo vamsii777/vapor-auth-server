@@ -89,7 +89,8 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
     
     
     /// The unique identifier of the access token.
-    var jti = String()
+    @Field(key: "jti")
+    var jti: String
     
     /// Initializes an access token from a decoder.
     /// - Parameters:

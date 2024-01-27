@@ -78,7 +78,7 @@ public func configure(_ app: Application) async throws {
                 resourceServerUsername: "",
                 resourceServerPassword: ""
             ),
-            jwtSignerService: JWTSignerService(keyManagementService: keyManagementService),
+            jwtSignerService: JWTSignerService(keyManagementService: keyManagementService, cryptoKeysRepository: cryptoKeysRepository),
             discoveryDocument: DiscoveryDocument(),
             keyManagementService: keyManagementService
         )

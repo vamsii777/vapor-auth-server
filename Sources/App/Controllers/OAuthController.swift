@@ -13,9 +13,10 @@ public struct OAuthRouteControllerCollection: RouteCollection {
     /// - Parameter routes: The RoutesBuilder instance used to register the routes.
     public func boot(routes: RoutesBuilder) throws {
         let passwordProtected = routes.grouped(UserModel.credentialsAuthenticator(database: .main))
-        let oauthRoutes = passwordProtected.grouped("oauth")
+        let v1 = passwordProtected.grouped("v1")
+        let oauthRoutes = v1.grouped("oauth2")
         oauthRoutes.post("login", use: login)
-        oauthRoutes.get("redirect", use: redirect)
+        oauthRoutes.get("authorize", use: authorize)
         oauthRoutes.get("logout", use: logout)
     }
     
@@ -58,7 +59,7 @@ public struct OAuthRouteControllerCollection: RouteCollection {
     /// Handles the redirect request for OAuth authentication.
     /// - Parameter request: The incoming Request instance.
     /// - Returns: The Response instance.
-    func redirect(_ request: Request) async throws -> Response {
+    func authorize(_ request: Request) async throws -> Response {
         
         guard let state = request.session.data["state"],
               let client_id = request.session.data["client_id"],
