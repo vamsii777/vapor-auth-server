@@ -42,25 +42,9 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
     @Field(key: "user_id")
     var userID: String?
     
-    /// The scopes associated with the access token.
-    var scopes: [String]? {
-        get {
-            guard let scopes = _scopes else { return nil }
-            let scopesArray = scopes.split(separator: ",")
-            return scopesArray.map(String.init)
-        }
-        set {
-            guard let newValue = newValue else {
-                _scopes = nil
-                return
-            }
-            _scopes = newValue.joined(separator: ",")
-        }
-    }
-    
     /// The internal representation of the scopes as a string.
     @Field(key: "scopes")
-    var _scopes: String?
+    var scopes: String?
     
     /// The expiry time of the access token.
     @Field(key: "expiry_time")
@@ -134,7 +118,7 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
          token: String,
          clientID: String,
          userID: String? = nil,
-         scopes: [String]? = nil,
+         scopes: String? = nil,
          expiryTime: Date
     ) {
         self.id = id

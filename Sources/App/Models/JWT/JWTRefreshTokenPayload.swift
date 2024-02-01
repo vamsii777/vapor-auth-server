@@ -14,7 +14,7 @@ final class JWTRefreshTokenPayload: VaporOAuth.RefreshToken {
     public var userID: String?
     
     /// The scopes granted to the token.
-    public var scopes: [String]?
+    public var scopes: String?
     
     /// The expiration date of the token.
     public var exp: Date
@@ -49,7 +49,7 @@ final class JWTRefreshTokenPayload: VaporOAuth.RefreshToken {
         jti: String,
         clientID: String,
         userID: String? = nil,
-        scopes: [String]? = nil,
+        scopes: String? = nil,
         exp: Date,
         issuer: String,
         issuedAt: Date

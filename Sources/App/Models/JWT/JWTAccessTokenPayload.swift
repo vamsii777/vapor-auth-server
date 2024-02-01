@@ -25,7 +25,7 @@ final class JWTAccessTokenPayload: VaporOAuth.AccessToken {
     public var userID: String?
     
     /// The scopes granted to the token.
-    public var scopes: [String]?
+    public var scopes: String?
     
     /// The expiry time of the token.
     public var expiryTime: Date
@@ -48,7 +48,7 @@ final class JWTAccessTokenPayload: VaporOAuth.AccessToken {
     public init(jti: String,
                 clientID: String,
                 userID: String? = nil,
-                scopes: [String]? = nil,
+                scopes: String? = nil,
                 expiryTime: Date,
                 issuer: String,
                 issuedAt: Date

@@ -89,13 +89,16 @@ final class AuthorizationCodeManger: VaporOAuth.CodeManager {
             return nil
         }
         
+        // Convert the space-separated string to an array of strings
+        let scopesArray = authorizationCode.scopes?.components(separatedBy: " ")
+        
         return OAuthCode(
             codeID: authorizationCode.codeID,
             clientID: authorizationCode.clientID,
             redirectURI: authorizationCode.redirectURI,
             userID: authorizationCode.userID,
             expiryDate: authorizationCode.expiryDate,
-            scopes: authorizationCode.scopes,
+            scopes: scopesArray, // Now correctly passing an array of strings
             codeChallenge: authorizationCode.codeChallenge,
             codeChallengeMethod: authorizationCode.codeChallengeMethod,
             nonce: authorizationCode.nonce
@@ -108,13 +111,16 @@ final class AuthorizationCodeManger: VaporOAuth.CodeManager {
         let generatedCode = UUID().uuidString
         let expiryDate = Date().addingTimeInterval(60)
         
+        // Convert the array of scopes to a space-separated string
+        let scopesString = scopes?.joined(separator: " ")
+        
         let authorizationCode = AuthorizationCode(
             codeID: generatedCode,
             clientID: clientID,
             redirectURI: redirectURI,
             userID: userID,
             expiryDate: expiryDate,
-            scopes: scopes,
+            scopes: scopesString, // Now correctly passing a String?
             codeChallenge: codeChallenge,
             codeChallengeMethod: codeChallengeMethod,
             nonce: nonce

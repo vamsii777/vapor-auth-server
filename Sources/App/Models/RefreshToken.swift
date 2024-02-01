@@ -29,24 +29,8 @@ final class RefreshToken: VaporOAuth.RefreshToken, Model, Content {
     @Field(key: "user_id")
     var userID: String?
     
-    /// The scopes associated with the refresh token.
-    var scopes: [String]? {
-        get {
-            guard let scopes = _scopes else { return nil }
-            let scopesArray = scopes.split(separator: ",")
-            return scopesArray.map(String.init)
-        }
-        set {
-            guard let newValue = newValue else {
-                _scopes = nil
-                return
-            }
-            _scopes = newValue.joined(separator: ",")
-        }
-    }
-    
     @Field(key: "scopes")
-    var _scopes: String?
+    var scopes: String?
     
     @Field(key: "exp")
     var exp: Date
@@ -67,7 +51,7 @@ final class RefreshToken: VaporOAuth.RefreshToken, Model, Content {
         jti: String,
         clientID: String,
         userID: String? = nil,
-        scopes: [String]? = nil,
+        scopes: String? = nil,
         exp: Date
     ) {
         self.id = id

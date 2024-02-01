@@ -45,25 +45,9 @@ final class AuthorizationCode: Model, Content {
     @Field(key: "expiry_date")
     var expiryDate: Date
     
-    /// The scopes associated with the authorization code.
-    var scopes: [String]? {
-        get {
-            guard let scopes = _scopes else { return nil }
-            let scopesArray = scopes.split(separator: ",")
-            return scopesArray.map(String.init)
-        }
-        set {
-            guard let newValue = newValue else {
-                _scopes = nil
-                return
-            }
-            _scopes = newValue.joined(separator: ",")
-        }
-    }
-    
     /// The scopes as a comma-separated string.
     @Field(key: "scopes")
-    var _scopes: String?
+    var scopes: String?
     
     /// The code challenge associated with the authorization code.
     @OptionalField(key: "code_challenge")
@@ -98,7 +82,7 @@ final class AuthorizationCode: Model, Content {
          redirectURI: String,
          userID: String,
          expiryDate: Date,
-         scopes: [String]?,
+         scopes: String?,
          codeChallenge: String?,
          codeChallengeMethod: String?,
          nonce: String?

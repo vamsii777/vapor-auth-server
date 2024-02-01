@@ -78,7 +78,7 @@ final class TokenManager: VaporOAuth.TokenManager {
             .filter(\.$jti == refreshToken.jti)
             .first() {
             
-            token.scopes = scopes
+            token.scopes = scopes.joined(separator: " ")
             
             try await token.save(on: app.db)
             
@@ -306,22 +306,24 @@ final class TokenManager: VaporOAuth.TokenManager {
             token: tokenString,
             clientID: clientID,
             userID: userID,
-            scopes: scopes,
+            scopes: scopes?.joined(separator: " "),
             expiryTime: expiryTime
         )
         
     }
     
-    // Change the return type to your concrete RefreshToken class
     func createRefreshToken(clientID: String, userID: String?, scopes: [String]?) throws -> RefreshToken {
         // Expiry time: 30 days
         let expiryTimeRefreshToken = Date(timeIntervalSinceNow: TimeInterval(60 * 60 * 24 * 30))
+        
+        // Convert the array of scopes to a space-separated string
+        let scopesString = scopes?.joined(separator: " ")
         
         return RefreshToken(
             jti: [UInt8].random(count: 32).hex,
             clientID: clientID,
             userID: userID,
-            scopes: scopes,
+            scopes: scopesString, // Now correctly passing a String?
             exp: expiryTimeRefreshToken
         )
     }
