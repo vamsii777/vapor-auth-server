@@ -66,7 +66,7 @@ final class UserManager: VaporOAuth.UserManager {
             emailAddress: "",
             password: "",
             extend: [:],
-            updatedAt: nil
+            updatedAt: myUser.updatedAt
         )
         
         // Map scopes to actions or attribute assignments

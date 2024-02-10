@@ -15,8 +15,10 @@ public func configure(_ app: Application) async throws {
         return environment == .production
     }
     
+    let corsOrigins = Environment.get("CORS_ORIGINS")?.split(separator: ",").map(String.init) ?? []
+    
     let corsConfiguration = CORSMiddleware.Configuration(
-        allowedOrigin: .any(["http://auth.dewonderstruck.com:3000", "http://auth.dewonderstruck.com:8089", "http://auth.dewonderstruck.com:8090"]),
+        allowedOrigin: .any(corsOrigins),
         allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
         allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, .userAgent, .accessControlAllowOrigin, .accessControlAllowHeaders, .init("X-CSRF-TOKEN")],
         allowCredentials: true
