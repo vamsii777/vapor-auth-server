@@ -70,7 +70,7 @@ public func configure(_ app: Application) async throws {
             clientRetriever: ClientRetriever(app: app),
             authorizeHandler: AuthorizationHandler(),
             userManager: UserManager(app: app),
-            validScopes: nil, //["admin,openid"], value required if no clients defined
+            validScopes: ["admin", "openid"],
             resourceServerRetriever: ResourceServerRetriever(app: app),
             oAuthHelper: .remote(
                 tokenIntrospectionEndpoint: "",

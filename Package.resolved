@@ -257,8 +257,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vamsii777/vapor-oauth.git",
       "state" : {
-        "branch" : "1.1.0-beta.4",
-        "revision" : "caa54641774df5a6d47d8a3362ff720e5c39546e"
+        "branch" : "feature/openid",
+        "revision" : "9f92166dbac47abf00109797089659002a662cc7"
       }
     },
     {

@@ -43,6 +43,51 @@ final class UserManager: VaporOAuth.UserManager {
         // Return the user's UUID string
         return user.id?.uuidString
     }
+
+    func getUserClient(userID: String, clientID: String) async throws -> VaporOAuth.OAuthUser? {
+        guard let userUUID = UUID(uuidString: userID) else {
+            throw Abort(.badRequest, reason: "userID not valid UUID")
+        }
+        
+        // Assuming separate queries are necessary. Consider optimizing with joins or batch fetching if possible.
+        guard let myUser = try await UserModel.query(on: app.db).filter(\.$id == userUUID).first() else {
+            return nil
+        }
+        
+        guard let client = try await Client.query(on: app.db).filter(\.$clientId == clientID).first(),
+              let clientScopes = client.scopes else {
+            throw Abort(.badRequest, reason: "ClientID not valid or no scopes found")
+        }
+        
+        // Initialize OAuthUser with mandatory fields
+        var oauthUser = OAuthUser(
+            userID: myUser.id?.uuidString,
+            username: myUser.username,
+            emailAddress: "",
+            password: "",
+            extend: [:],
+            updatedAt: nil
+        )
+        
+        // Map scopes to actions or attribute assignments
+        for scope in clientScopes {
+            switch scope {
+            case "email":
+                oauthUser.emailAddress = myUser.emailAddress
+            case "profile":
+                oauthUser.name = myUser.name
+                oauthUser.givenName = myUser.givenName
+                oauthUser.familyName = myUser.familyName
+                // Add more profile related assignments here
+            // Handle other scopes similarly
+            default:
+                break // For any unrecognized scope, do nothing
+            }
+        }
+        
+        return oauthUser
+    }
+
     
     /// Retrieve username in Introspection
     func getUser(userID: String) async throws -> VaporOAuth.OAuthUser? {
