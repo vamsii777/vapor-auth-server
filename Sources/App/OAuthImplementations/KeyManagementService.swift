@@ -40,31 +40,11 @@ final class MyKeyManagementService: VaporOAuth.KeyManagementService {
         try await cryptoKeysRepository.create(keyRecord, operation: .create)
     }
     
-    func retrieveKey(identifier: String, keyType: VaporOAuth.KeyType) async throws -> Data {
+    func retrieveKey(identifier: String, keyType: VaporOAuth.KeyType) async throws -> String {
         guard let keyRecord = try await cryptoKeysRepository.find(identifier: identifier, keyType: keyType.rawValue) else {
             throw Abort(.notFound)
         }
-        
-        switch keyType {
-        case .private:
-            // Parse the PEM representation of the private key
-            let privateKeyPem = keyRecord.keyValue
-            guard let privateKey = try? P256.Signing.PrivateKey(pemRepresentation: privateKeyPem) else {
-                throw Abort(.internalServerError, reason: "Failed to parse P-256 private key")
-            }
-            return privateKey.rawRepresentation
-            
-        case .public:
-            // Parse the PEM representation of the public key
-            let publicKeyPem = keyRecord.keyValue
-            guard let publicKey = try? P256.Signing.PublicKey(pemRepresentation: publicKeyPem) else {
-                throw Abort(.internalServerError, reason: "Failed to parse P-256 public key")
-            }
-            return publicKey.rawRepresentation
-            
-        default:
-            throw Abort(.badRequest, reason: "Unsupported key type")
-        }
+        return keyRecord.keyValue
     }
     
     func listKeys() async throws -> [String] {
@@ -118,17 +98,16 @@ final class MyKeyManagementService: VaporOAuth.KeyManagementService {
         return keyRecord.id!.uuidString
     }
     
-    func calculateKid(_ publicKey: Data) -> JWKIdentifier {
-        // Create a SHA-256 hash of the public key data
-        let sha256 = SHA256.hash(data: publicKey)
-        
-        // Convert the hash to a Base64URL encoded string
+    func calculateKid(_ publicKey: String) -> JWKIdentifier {
+        guard let publicKeyData = publicKey.data(using: .utf8) else {
+            fatalError("Unable to convert public key to data")
+        }
+        let sha256 = SHA256.hash(data: publicKeyData)
         let base64URL = Data(sha256).base64URLEncodedString()
-        
         return JWKIdentifier(stringLiteral: base64URL)
     }
     
-    func convertToJWK(_ publicKey: Data) throws -> [JWK] {
+    func convertToJWK(_ publicKey: String) throws -> [JWK] {
         // Since P-256 keys are 64 bytes in length (32 bytes for X and 32 bytes for Y),
         // split the raw bytes into X and Y components.
         // Note: This might vary for different key types.
@@ -136,12 +115,16 @@ final class MyKeyManagementService: VaporOAuth.KeyManagementService {
             throw NSError(domain: "InvalidKeyLength", code: -1, userInfo: nil)
         }
         
-        let xBytes = publicKey.prefix(32)
-        let yBytes = publicKey.suffix(32)
+        let xBytes = String(publicKey.prefix(32))
+        let yBytes = String(publicKey.suffix(32))
         
         // Convert the X and Y bytes to Base64URL encoded strings
-        let xBase64 = xBytes.base64EncodedString()
-        let yBase64 = yBytes.base64EncodedString()
+        // Assuming the conversion to Base64URL encoded strings is needed
+        guard let xData = xBytes.data(using: .utf8), let yData = yBytes.data(using: .utf8) else {
+            throw NSError(domain: "EncodingError", code: -2, userInfo: nil)
+        }
+        let xBase64 = xData.base64EncodedString()
+        let yBase64 = yData.base64EncodedString()
         
         // Calculate the "kid" (Key ID)
         let kid = calculateKid(publicKey)
