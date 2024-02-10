@@ -50,9 +50,6 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
     @Field(key: "expiry_time")
     var expiryTime: Date
     
-    
-    // Additional properties for the token generation
-    
     /// The issuer of the access token.
     @Field(key: "issuer")
     var issuer: String
@@ -71,23 +68,31 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
         case iat
     }
     
-    
-    /// The unique identifier of the access token.
-    @Field(key: "jti")
-    var jti: String
+    // The 'jti' field is mapped to the model's 'id' to use it as the JWT's unique identifier.
+    // This is a design decision to simplify the token handling and adhere to JWT best practices.
+    var jti: String {
+        id?.uuidString ?? ""
+    }
     
     /// Initializes an access token from a decoder.
     /// - Parameters:
     ///   - decoder: The decoder to decode the access token from.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        userID = try container.decode(String.self, forKey: .sub)
-        expiryTime = try container.decode(Date.self, forKey: .exp)
-        if let token = try container.decodeIfPresent(String.self, forKey: .jti) {
-            self.jti = token
-        }
-        issuer = try container.decode(String.self, forKey: .iss)
-        clientID = try container.decode(String.self, forKey: .aud)
+        userID = try container.decodeIfPresent(String.self, forKey: .sub)
+        expiryTime = try container.decodeIfPresent(Date.self, forKey: .exp) ?? Date()
+        issuer = try container.decodeIfPresent(String.self, forKey: .iss) ?? ""
+        clientID = try container.decodeIfPresent(String.self, forKey: .aud) ?? ""
+        
+        // Decode `iat` as a Date and then convert to String if needed.
+        let iatDate = try container.decodeIfPresent(Date.self, forKey: .iat) ?? Date()
+        // Format Date to String here, according to your preferred format.
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ" // ISO 8601 format
+        iat = dateFormatter.string(from: iatDate)
+        
+        // The 'jti' field is not directly stored as it's derived from the 'id' property.
+        // Hence, it's not decoded here but will be handled as part of JWT payload encoding/decoding.
     }
     
     /// Encodes the access token to an encoder.
@@ -95,12 +100,18 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
     ///   - encoder: The encoder to encode the access token to.
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(userID, forKey: .sub)
+        try container.encodeIfPresent(userID, forKey: .sub)
         try container.encode(expiryTime, forKey: .exp)
-        try container.encode(token, forKey: .jti)
         try container.encode(issuer, forKey: .iss)
         try container.encode(clientID, forKey: .aud)
+        
+        // Encode 'iat' as a Date.
         try container.encode(iat, forKey: .iat)
+        
+        // Encode 'jti' using 'id' property, assuming 'id' is available and is a UUID.
+        if let id = id {
+            try container.encode(id.uuidString, forKey: .jti)
+        }
     }
     
     /// Initializes an empty access token.

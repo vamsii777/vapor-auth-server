@@ -7,7 +7,7 @@ import VaporOAuth
 // configures your application
 public func configure(_ app: Application) async throws {
     app.logger.logLevel = .notice
-    app.http.server.configuration.port = 8090
+    app.http.server.configuration.port = 8000
     try configureDatabases(app)
     app.databases.default(to: .main)
     
@@ -72,7 +72,7 @@ public func configure(_ app: Application) async throws {
             clientRetriever: ClientRetriever(app: app),
             authorizeHandler: AuthorizationHandler(),
             userManager: UserManager(app: app),
-            validScopes: ["admin", "openid"],
+            validScopes: nil,
             resourceServerRetriever: ResourceServerRetriever(app: app),
             oAuthHelper: .remote(
                 tokenIntrospectionEndpoint: "",
