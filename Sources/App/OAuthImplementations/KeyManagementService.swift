@@ -98,39 +98,24 @@ final class MyKeyManagementService: VaporOAuth.KeyManagementService {
         return keyRecord.id!.uuidString
     }
     
-    func calculateKid(_ publicKey: String) -> JWKIdentifier {
-        guard let publicKeyData = publicKey.data(using: .utf8) else {
-            fatalError("Unable to convert public key to data")
-        }
-        let sha256 = SHA256.hash(data: publicKeyData)
-        let base64URL = Data(sha256).base64URLEncodedString()
-        return JWKIdentifier(stringLiteral: base64URL)
-    }
-    
     func convertToJWK(_ publicKey: String) throws -> [JWK] {
-        // Since P-256 keys are 64 bytes in length (32 bytes for X and 32 bytes for Y),
-        // split the raw bytes into X and Y components.
-        // Note: This might vary for different key types.
-        guard publicKey.count == 64 else {
-            throw NSError(domain: "InvalidKeyLength", code: -1, userInfo: nil)
+        // Assuming publicKey is a PEM-encoded EC public key
+        guard let ecPublicKey = try? P256.KeyAgreement.PublicKey(pemRepresentation: publicKey) else {
+            throw NSError(domain: "PublicKeyError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to initialize EC public key from PEM"])
         }
         
-        let xBytes = String(publicKey.prefix(32))
-        let yBytes = String(publicKey.suffix(32))
+        // Extract X and Y coordinates from the public key
+        let x = ecPublicKey.x963Representation[1..<33].base64URLEncodedString()
+        let y = ecPublicKey.x963Representation[33..<65].base64URLEncodedString()
         
-        // Convert the X and Y bytes to Base64URL encoded strings
-        // Assuming the conversion to Base64URL encoded strings is needed
-        guard let xData = xBytes.data(using: .utf8), let yData = yBytes.data(using: .utf8) else {
-            throw NSError(domain: "EncodingError", code: -2, userInfo: nil)
-        }
-        let xBase64 = xData.base64EncodedString()
-        let yBase64 = yData.base64EncodedString()
+        // Calculate the "kid" (Key ID) using a hash function on the X and Y coordinates for simplicity
+        // In practice, this might involve more specific requirements for ID generation
+        let publicKeyData = Data(ecPublicKey.x963Representation)
+        let sha256 = SHA256.hash(data: publicKeyData)
+        let kid = JWKIdentifier(stringLiteral: Data(sha256).base64URLEncodedString())
         
-        // Calculate the "kid" (Key ID)
-        let kid = calculateKid(publicKey)
-        
-        // Construct the JWK dictionary
-        let jwk: JWK = .ecdsa(.es256, identifier: kid, x: xBase64, y: yBase64, curve: .p256)
+        // Construct the JWK
+        let jwk: JWK = .ecdsa(.es256, identifier: kid, x: x, y: y, curve: .p256)
         
         return [jwk]
     }
