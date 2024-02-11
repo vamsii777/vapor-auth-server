@@ -8,6 +8,7 @@ struct CreateAccessToken: AsyncMigration {
 
       try await database.schema(schemaName)
          .id()
+         .field("jti", .string, .required)
          .field("token", .string, .required)
          .field("client_id", .string, .required)
          .field("user_id", .string, .required)

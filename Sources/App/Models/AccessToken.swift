@@ -46,6 +46,12 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
     @Field(key: "scopes")
     var scopes: String?
     
+    // Computed property to get/set the scopes as scope
+    var scope: String? {
+        get { scopes }
+        set { scopes = newValue }
+    }
+    
     /// The expiry time of the access token.
     @Field(key: "expiry_time")
     var expiryTime: Date
@@ -68,11 +74,8 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
         case iat
     }
     
-    // The 'jti' field is mapped to the model's 'id' to use it as the JWT's unique identifier.
-    // This is a design decision to simplify the token handling and adhere to JWT best practices.
-    var jti: String {
-        id?.uuidString ?? ""
-    }
+    @Field(key: "jti")
+    var jti: String
     
     /// Initializes an access token from a decoder.
     /// - Parameters:
@@ -83,6 +86,7 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
         expiryTime = try container.decodeIfPresent(Date.self, forKey: .exp) ?? Date()
         issuer = try container.decodeIfPresent(String.self, forKey: .iss) ?? ""
         clientID = try container.decodeIfPresent(String.self, forKey: .aud) ?? ""
+        jti = try container.decode(String.self, forKey: .jti)
         
         // Decode `iat` as a Date and then convert to String if needed.
         let iatDate = try container.decodeIfPresent(Date.self, forKey: .iat) ?? Date()
@@ -90,9 +94,6 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ" // ISO 8601 format
         iat = dateFormatter.string(from: iatDate)
-        
-        // The 'jti' field is not directly stored as it's derived from the 'id' property.
-        // Hence, it's not decoded here but will be handled as part of JWT payload encoding/decoding.
     }
     
     /// Encodes the access token to an encoder.
@@ -104,14 +105,8 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
         try container.encode(expiryTime, forKey: .exp)
         try container.encode(issuer, forKey: .iss)
         try container.encode(clientID, forKey: .aud)
-        
-        // Encode 'iat' as a Date.
+        try container.encode(jti, forKey: .jti)
         try container.encode(iat, forKey: .iat)
-        
-        // Encode 'jti' using 'id' property, assuming 'id' is available and is a UUID.
-        if let id = id {
-            try container.encode(id.uuidString, forKey: .jti)
-        }
     }
     
     /// Initializes an empty access token.
@@ -126,17 +121,19 @@ final class AccessToken: Model, Content, VaporOAuth.AccessToken, JWTPayload {
     ///   - scopes: The scopes associated with the access token.
     ///   - expiryTime: The expiry time of the access token.
     init(id: UUID? = nil,
+         jti: String,
          token: String,
          clientID: String,
          userID: String? = nil,
-         scopes: String? = nil,
+         scope: String? = nil,
          expiryTime: Date
     ) {
         self.id = id
+        self.jti = jti
         self.token = token
         self.clientID = clientID
         self.userID = userID
-        self.scopes = scopes
+        self.scope = scope
         self.expiryTime = expiryTime
     }
 }

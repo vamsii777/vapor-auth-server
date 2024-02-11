@@ -124,7 +124,7 @@ final class TokenManager: VaporOAuth.TokenManager {
             userID: refreshToken.userID,
             scopes: refreshToken.scopes,
             exp: refreshToken.exp,
-            issuer: "OpenID Provider",
+            issuer: "https://securetoken.dewonderstruck.com",
             issuedAt: Date()
         )
         
@@ -171,7 +171,7 @@ final class TokenManager: VaporOAuth.TokenManager {
             userID: refreshToken.userID,
             scopes: refreshToken.scopes,
             exp: refreshToken.exp,
-            issuer: "OpenID",
+            issuer: "https://securetoken.dewonderstruck.com",
             issuedAt: Date()
         )
         
@@ -261,7 +261,7 @@ final class TokenManager: VaporOAuth.TokenManager {
         let accessTokenUniqueId = UUID().uuidString
         
         // Expiry time 1 minutes for testing purposes
-        let expiryTimeAccessToken = Date(timeIntervalSinceNow: TimeInterval(60))
+        let expiryTimeAccessToken = Date(timeIntervalSinceNow: TimeInterval(Environment.get("OAUTH_ACCESS_TOKEN_MAX_AGE").flatMap(Int.init) ?? 60 * 60 * 24 * 7))
         
         // Access Token for Database
         let accessToken = try createAccessToken(
@@ -280,7 +280,7 @@ final class TokenManager: VaporOAuth.TokenManager {
             userID: accessToken.userID,
             scopes: accessToken.scopes,
             expiryTime: accessToken.expiryTime,
-            issuer: "OpenID",
+            issuer: "https://securetoken.dewonderstruck.com",
             issuedAt: Date()
         )
         
@@ -303,10 +303,11 @@ final class TokenManager: VaporOAuth.TokenManager {
     func createAccessToken(tokenString: String, clientID: String, userID: String?, scopes: [String]?, expiryTime: Date) throws -> AccessToken {
         
         return AccessToken(
+            jti: [UInt8].random(count: 32).hex,
             token: tokenString,
             clientID: clientID,
             userID: userID,
-            scopes: scopes?.joined(separator: " "),
+            scope: scopes?.joined(separator: " "),
             expiryTime: expiryTime
         )
         
@@ -314,7 +315,7 @@ final class TokenManager: VaporOAuth.TokenManager {
     
     func createRefreshToken(clientID: String, userID: String?, scopes: [String]?) throws -> RefreshToken {
         // Expiry time: 30 days
-        let expiryTimeRefreshToken = Date(timeIntervalSinceNow: TimeInterval(60 * 60 * 24 * 30))
+        let expiryTimeRefreshToken = Date(timeIntervalSinceNow: TimeInterval(Environment.get("OAUTH_REFRESH_TOKEN_MAX_AGE").flatMap(Int.init) ?? 60 * 60 * 24 * 30))
         
         // Convert the array of scopes to a space-separated string
         let scopesString = scopes?.joined(separator: " ")
@@ -332,11 +333,11 @@ final class TokenManager: VaporOAuth.TokenManager {
     func createIDToken(subject: String, audience: [String], nonce: String?, authTime: Date?) throws -> IDToken {
         
         // Expiry time: 30 days
-        let expiryTimeIDToken = Date(timeIntervalSinceNow: TimeInterval(60 * 60 * 24 * 30))
+        let expiryTimeIDToken = Date(timeIntervalSinceNow: TimeInterval(Environment.get("OAUTH_ID_TOKEN_MAX_AGE").flatMap(Int.init) ?? 60 * 60))
         
         return IDToken(
             jti: [UInt8].random(count: 32).hex,
-            iss: "OpenID Provider",
+            iss: "https://securetoken.dewonderstruck.com",
             sub: subject,
             aud: audience,
             exp: expiryTimeIDToken,
